@@ -1,0 +1,69 @@
+import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer
+
+group project['group']
+version project['version']
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+    }
+}
+
+repositories {
+    maven { url project['maven.repo'] }
+    mavenCentral()
+    jcenter()
+}
+
+plugins.withType(JavaPlugin).whenPluginAdded {
+    sourceCompatibility = JavaVersion.VERSION_1_7
+    targetCompatibility = JavaVersion.VERSION_1_7
+}
+
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    baseName = 'ElasticSearchConnector'
+    classifier = null
+    manifest {
+        attributes 'Implementation-Title': 'Elastic Search Connector',
+                'Implementation-Version': project.version,
+                'Main-Class': 'ru.sbrf.ofep.kafka.elastic.transportclient.ClientX'
+    }
+}
+
+assemble.dependsOn shadowJar
+
+test {
+    //enabled = false
+    maxParallelForks = 1
+    //Mask bug: https://discuss.gradle.org/t/gradle-consistently-stuck-at-test-task/14125/7
+    systemProperty "tests.jarhell.check", "false"
+    systemProperty "tests.security.manager", "false"
+}
+
+def kafkaDependensies = [
+        "org.apache.kafka:connect-api:${project['kafka.version']}",
+        "org.apache.kafka:kafka-clients:${project['kafka.version']}",
+        "org.apache.kafka:connect-json:${project['kafka.version']}"
+]
+
+dependencies {
+    compileOnly kafkaDependensies
+    compile group: 'commons-io', name: 'commons-io', version: '2.4'
+    compile group: 'io.searchbox', name: 'jest', version: '2.0.0'
+    compile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.4.2'
+
+
+    testCompile kafkaDependensies
+    testCompile group: 'com.google.guava', name: 'guava', version: '18.0'
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    testCompile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.4.2', classifier: 'tests'
+    testCompile 'org.apache.lucene:lucene-test-framework:5.5.2'
+    testCompile 'org.hamcrest:hamcrest-library:1.3'
+}
