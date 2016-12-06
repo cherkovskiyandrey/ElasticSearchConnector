@@ -33,7 +33,7 @@ public enum ConfigParam {
     MAPPING("mapping", ConfigDef.Type.STRING, null, null, ConfigDef.Importance.LOW, "Mapping for index as JSON string."),
 
     ERROR_POLICY("error.policy", ConfigDef.Type.STRING, ConfigDef.ValidString.in(ErrorPolicy.allValuesName()),
-            ErrorPolicy.RETRY_FOREVER, ConfigDef.Importance.LOW,
+            ErrorPolicy.RETRY_FOREVER.getName(), ConfigDef.Importance.LOW,
             "What to do if exception from elasticsearch is arise which does not connect with transport." +
                     "FAIL_FAST - shutdown current task. JUST_LOG - only write to log and go further." +
                     "RETRY_FOREVER - retry forever."),;

@@ -54,7 +54,9 @@ public class ElasticTask extends SinkTask {
         final String type = configuration.getString(ConfigParam.DEFAULT_TYPE.getName());
         final String mapping = configuration.getString(ConfigParam.MAPPING.getName());
 
-        elasticsearchClient.putMappingIfNotExists(index, type, mapping);
+        if(type != null && mapping != null) {
+            elasticsearchClient.putMappingIfNotExists(index, type, mapping);
+        }
     }
 
     @Override
@@ -70,6 +72,7 @@ public class ElasticTask extends SinkTask {
         this.elasticsearchClient = elasticsearchClient;
         this.documentConverter = documentConverter;
         this.errorPolicy = errorPolicy;
+        initIfNeed();
     }
 
     @Override
@@ -134,7 +137,9 @@ public class ElasticTask extends SinkTask {
     }
 
     private void shiftOffsetsIfNeed(Map<TopicPartition, Long> offsets) {
-        context.offset(offsets);
+        if(!offsets.isEmpty()) {
+            context.offset(offsets);
+        }
     }
 
     private Map<TopicPartition, Long> waitAllResults(Map<TopicPartition, Future<Long>> waitableOffsets)
@@ -209,12 +214,12 @@ public class ElasticTask extends SinkTask {
     }
 
     private Map<TopicPartition, Future<Long>> asyncFlushAll() {
-        final Map<TopicPartition, Future<Long>> offsets = new HashMap<>();
+        final Map<TopicPartition, Future<Long>> partitions = new HashMap<>();
         for (Map.Entry<TopicPartition, PartitionConsumer> consumer : consumers.entrySet()) {
             final Future<Long> result = consumer.getValue().asyncFlush();
-            offsets.put(consumer.getKey(), result);
+            partitions.put(consumer.getKey(), result);
         }
-        return offsets;
+        return partitions;
     }
 
     @Override
