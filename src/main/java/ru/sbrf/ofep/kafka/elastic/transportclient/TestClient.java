@@ -1,42 +1,23 @@
 package ru.sbrf.ofep.kafka.elastic.transportclient;
 
 
-import org.apache.kafka.connect.json.JsonConverter;
-import org.apache.kafka.connect.storage.Converter;
-import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.ActionRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequestBuilder;
-import org.elasticsearch.action.admin.indices.exists.types.TypesExistsRequest;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
-import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
-import org.elasticsearch.action.bulk.*;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.compress.CompressedXContent;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.QueryBuilder;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
-public class ClientX {
+public class TestClient {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -107,6 +88,40 @@ public class ClientX {
                         "}" +
                         "} " +
                         "}";
+
+        String globalMapping2 =
+                "{ \"my_type\" : " +
+                        "{ \"properties\" : " +
+                        "{ " +
+
+                        "\"id\" : " +
+                        " {" +
+                        " \"type\" : \"long\"," +
+                        " \"store\" : \"yes\"" +
+                        " }," +
+
+                        "\"level\" : " +
+                        " {" +
+                        " \"type\" : \"string\"," +
+                        " \"store\" : \"yes\"" +
+                        " }," +
+
+                        "\"postDate\" : " +
+                        " {" +
+                        " \"type\" : \"date\"," +
+                        " \"store\" : \"yes\"" +
+                        " }," +
+
+                        "\"message\" : " +
+                        " {" +
+                        " \"type\" : \"string\"," +
+                        " \"store\" : \"yes\"" +
+                        " }" +
+                        "}" +
+                        "} " +
+                        "}";
+
+
         {
             client.admin().indices().preparePutMapping("articles")
                     .setType("my_type")

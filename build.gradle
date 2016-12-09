@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer
-
 group project['group']
 version project['version']
 
@@ -32,7 +30,7 @@ shadowJar {
     manifest {
         attributes 'Implementation-Title': 'Elastic Search Connector',
                 'Implementation-Version': project.version,
-                'Main-Class': 'ru.sbrf.ofep.kafka.elastic.transportclient.ClientX'
+                'Main-Class': project['main.class']
     }
 }
 
@@ -46,20 +44,20 @@ test {
     systemProperty "tests.security.manager", "false"
 }
 
-def kafkaDependensies = [
+def kafkaDependencies = [
         "org.apache.kafka:connect-api:${project['kafka.version']}",
         "org.apache.kafka:kafka-clients:${project['kafka.version']}",
-        "org.apache.kafka:connect-json:${project['kafka.version']}"
+        "org.apache.kafka:connect-json:${project['kafka.version']}",
+        "org.apache.commons:commons-lang3:3.4"
 ]
 
 dependencies {
-    compileOnly kafkaDependensies
+    compileOnly kafkaDependencies
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
-    compile group: 'io.searchbox', name: 'jest', version: '2.0.0'
     compile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.4.2'
 
 
-    testCompile kafkaDependensies
+    testCompile kafkaDependencies
     testCompile group: 'com.google.guava', name: 'guava', version: '18.0'
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile 'org.mockito:mockito-core:1.10.19'

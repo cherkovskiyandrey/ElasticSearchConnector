@@ -4,10 +4,13 @@ import org.apache.kafka.common.config.ConfigDef;
 import ru.sbrf.ofep.kafka.ErrorPolicy;
 import ru.sbrf.ofep.kafka.elastic.DocumentConverter;
 
-public enum ConfigParam {
-    CLUSTER_NAME("cluster.name", ConfigDef.Type.STRING, null, null, ConfigDef.Importance.HIGH, "Elasticsearch cluster name`s."),
+import static org.apache.kafka.common.config.ConfigDef.NO_DEFAULT_VALUE;
 
-    CLUSTER_NODES("cluster.nodes", ConfigDef.Type.LIST, null, null, ConfigDef.Importance.HIGH, "List of nodes of elasticsearch cluster. " +
+//TODO
+public enum ConfigParam {
+    CLUSTER_NAME("cluster.name", ConfigDef.Type.STRING, null, NO_DEFAULT_VALUE, ConfigDef.Importance.HIGH, "Elasticsearch cluster name`s."),
+
+    CLUSTER_NODES("cluster.nodes", ConfigDef.Type.LIST, null, NO_DEFAULT_VALUE, ConfigDef.Importance.HIGH, "List of nodes of elasticsearch cluster. " +
             "Format: host1:port1,host2:port2,..."),
 
     EXPORT_BUFFER_SIZE("export.buffer.size", ConfigDef.Type.INT, ConfigDef.Range.atLeast(1), 10000, ConfigDef.Importance.LOW,
@@ -19,10 +22,10 @@ public enum ConfigParam {
     EXPORT_BATCH_TIMEOUT("export.batch.timeout", ConfigDef.Type.INT, ConfigDef.Range.atLeast(10), 30, ConfigDef.Importance.LOW,
             "The timeout for exporting batch to elasticsearch."),
 
-    DEFAULT_INDEX("index.default", ConfigDef.Type.STRING, null, null, ConfigDef.Importance.LOW, "Use this index as elasticsearch default index," +
+    DEFAULT_INDEX("index.default", ConfigDef.Type.STRING, null, NO_DEFAULT_VALUE, ConfigDef.Importance.LOW, "Use this index as elasticsearch default index," +
             " ignore topic name."),
 
-    DEFAULT_TYPE("type.default", ConfigDef.Type.STRING, null, null, ConfigDef.Importance.LOW, "Use this type as elasticsearch default type."),
+    DEFAULT_TYPE("type.default", ConfigDef.Type.STRING, null, NO_DEFAULT_VALUE, ConfigDef.Importance.LOW, "Use this type as elasticsearch default type."),
 
     ID_MODE("id.mode", ConfigDef.Type.STRING, ConfigDef.ValidString.in(DocumentConverter.IdMode.allValuesName()),
             DocumentConverter.IdMode.KAFKA_DEFAULT.getValueName(), ConfigDef.Importance.LOW,
@@ -30,7 +33,7 @@ public enum ConfigParam {
                     "as id (only for integers and strings). KAFKA_DEFAULT - build id as topic_partition_offset. " +
                     "ELASTIC_DEFAULT - elasticsearch will generate id in its own strategy."),
 
-    MAPPING("mapping", ConfigDef.Type.STRING, null, null, ConfigDef.Importance.LOW, "Mapping for index as JSON string."),
+    MAPPING("mapping", ConfigDef.Type.STRING, null, NO_DEFAULT_VALUE, ConfigDef.Importance.LOW, "Mapping for index as JSON string."),
 
     ERROR_POLICY("error.policy", ConfigDef.Type.STRING, ConfigDef.ValidString.in(ErrorPolicy.allValuesName()),
             ErrorPolicy.RETRY_FOREVER.getName(), ConfigDef.Importance.LOW,

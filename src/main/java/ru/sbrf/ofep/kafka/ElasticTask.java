@@ -238,11 +238,11 @@ public class ElasticTask extends SinkTask {
         Utils.closeQuietly(elasticsearchClient);
     }
 
-    public boolean isInit() {
+    private boolean isInit() {
         return init;
     }
 
-    public void setInit(boolean init) {
+    private void setInit(boolean init) {
         this.init = init;
     }
 }

@@ -1,7 +1,5 @@
 package ru.sbrf.ofep.kafka.elastic;
 
-import java.io.Closeable;
-
 public interface ElasticsearchClient extends AutoCloseable {
 
     /**

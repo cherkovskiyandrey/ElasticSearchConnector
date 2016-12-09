@@ -39,6 +39,7 @@ public class DocumentConverter {
                 extractContent(record));
     }
 
+    //TODO: хотелось бы иметь и дату создания записи чтобы раскидывать по разным индексам
     private Key extractKey(SinkRecord record) {
         return new Key(
                 StringUtils.isNotEmpty(defaultIndex) ? defaultIndex : record.topic(),
