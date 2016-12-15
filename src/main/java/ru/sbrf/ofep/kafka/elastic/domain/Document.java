@@ -3,12 +3,14 @@ package ru.sbrf.ofep.kafka.elastic.domain;
 
 import org.apache.kafka.common.TopicPartition;
 
+import java.nio.charset.StandardCharsets;
+
 public class Document {
     private final Key key;
     private final MetaInfo metaInfo;
-    private final String jsonContent;
+    private final byte[] jsonContent;
 
-    public Document(Key key, MetaInfo metaInfo, String jsonContent) {
+    public Document(Key key, MetaInfo metaInfo, byte[] jsonContent) {
         this.key = key;
         this.metaInfo = metaInfo;
         this.jsonContent = jsonContent;
@@ -22,7 +24,7 @@ public class Document {
         return metaInfo;
     }
 
-    public String getJsonContent() {
+    public byte[] getJsonContent() {
         return jsonContent;
     }
 
@@ -31,7 +33,7 @@ public class Document {
         return "Document{" +
                 "key=" + key +
                 ", metaInfo=" + metaInfo +
-                ", jsonContent='" + jsonContent + '\'' +
+                ", jsonContent='" + new String(jsonContent, StandardCharsets.UTF_8) + '\'' +
                 '}';
     }
 

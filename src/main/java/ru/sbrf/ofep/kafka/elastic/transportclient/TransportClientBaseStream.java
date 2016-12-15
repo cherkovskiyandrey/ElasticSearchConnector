@@ -13,7 +13,6 @@ import ru.sbrf.ofep.kafka.elastic.domain.FailedDocument;
 import ru.sbrf.ofep.kafka.elastic.domain.Key;
 import ru.sbrf.ofep.kafka.elastic.exceptions.ElasticIOException;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Map;
@@ -55,7 +54,7 @@ public class TransportClientBaseStream implements ElasticWriteStream, Runnable {
     @Override
     public void write(Collection<Document> documents) throws ElasticIOException, InterruptedException {
         if(task.isDone()) {
-            throw new ElasticIOException("Stream is closed");
+            throw new ElasticIOException(null, "Stream is closed");
         }
         for (Document doc : documents) {
             inputQueue.put(doc);
@@ -65,7 +64,7 @@ public class TransportClientBaseStream implements ElasticWriteStream, Runnable {
     @Override
     public synchronized void flush() throws ElasticIOException, InterruptedException {
         if(task.isDone()) {
-            throw new ElasticIOException("Stream is closed");
+            throw new ElasticIOException(null, "Stream is closed");
         }
         flushEndResponse.set(new CountDownLatch(1));
         inputQueue.put(FLUSH_SIGNAL);
@@ -94,11 +93,8 @@ public class TransportClientBaseStream implements ElasticWriteStream, Runnable {
 
     private void putToBatch(BulkRequestBuilder bulkRequest, Document document) {
         final Key key = document.getKey();
-        final String source = document.getJsonContent();
-        final IndexRequestBuilder createReq = client.prepareIndex().setIndex(key.getIndex());
-        if(key.getType() != null) {
-            createReq.setType(key.getType());
-        }
+        final byte[] source = document.getJsonContent();
+        final IndexRequestBuilder createReq = client.prepareIndex(key.getIndex(), key.getType());
         if(key.getId() != null) {
             createReq.setId(key.getId());
         }

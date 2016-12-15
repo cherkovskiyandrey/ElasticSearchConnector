@@ -1,15 +1,21 @@
 package ru.sbrf.ofep.kafka.elastic.transportclient;
 
 
+import com.google.common.collect.ImmutableMap;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.test.ESSingleNodeTestCase;
 import org.junit.Test;
+import ru.sbrf.ofep.kafka.config.ElasticConfig;
 import ru.sbrf.ofep.kafka.elastic.ElasticWriteStream;
 
 import java.io.IOException;
+
+import static ru.sbrf.ofep.kafka.ElasticConnector.CONFIG_DEF;
+import static ru.sbrf.ofep.kafka.config.ConfigParam.*;
 
 public class TransportClientBaseTest extends ESSingleNodeTestCase {
 
@@ -44,11 +50,23 @@ public class TransportClientBaseTest extends ESSingleNodeTestCase {
                     "} " +
                     "}";
 
+    private static ElasticConfig configuration() {
+        return ElasticConfig.of(new AbstractConfig(CONFIG_DEF,
+                ImmutableMap.of(
+                        TOPICS.getName(), "test",
+                        CLUSTER_NAME.getName(), "test",
+                        CLUSTER_NODES.getName(), "localhost:9300",
+                        EXPORT_BUFFER_SIZE.getName(), 100,
+                        EXPORT_BATCH_SIZE.getName(), 10
+                )
+        ));
+    }
+
     @Test
     public void createIndexIfNotExistsTest() throws IOException {
         final Client client = client();
         try (final TransportClientBase transportClientBase =
-                     new TransportClientBase(client, 100, 10, TimeValue.timeValueSeconds(1))) {
+                     new TransportClientBase(client, configuration(), TimeValue.timeValueSeconds(1))) {
 
             assertTrue(transportClientBase.createIndexIfNotExists("test"));
             assertTrue(client.admin()
@@ -63,7 +81,7 @@ public class TransportClientBaseTest extends ESSingleNodeTestCase {
     public void putMappingIfNotExistsTest() throws IOException {
         final Client client = client();
         try (final TransportClientBase transportClientBase =
-                     new TransportClientBase(client, 100, 10, TimeValue.timeValueSeconds(1))) {
+                     new TransportClientBase(client, configuration(), TimeValue.timeValueSeconds(1))) {
 
             transportClientBase.createIndexIfNotExists("test");
 
@@ -82,7 +100,7 @@ public class TransportClientBaseTest extends ESSingleNodeTestCase {
     public void createNewStreamTest() throws Exception {
         final Client client = client();
         try (final TransportClientBase transportClientBase =
-                     new TransportClientBase(client, 100, 10, TimeValue.timeValueSeconds(1));
+                     new TransportClientBase(client, configuration(), TimeValue.timeValueSeconds(1));
              final ElasticWriteStream elasticWriteStream = transportClientBase.createNewStream()) {
             assertNotNull(elasticWriteStream);
         }

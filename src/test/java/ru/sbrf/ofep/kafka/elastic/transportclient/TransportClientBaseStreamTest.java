@@ -16,6 +16,7 @@ import ru.sbrf.ofep.kafka.elastic.domain.Key;
 import ru.sbrf.ofep.kafka.elastic.exceptions.ElasticIOException;
 import ru.sbrf.ofep.kafka.elastic.exceptions.ExceptionHelper;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
@@ -33,7 +34,7 @@ public class TransportClientBaseStreamTest extends ESSingleNodeTestCase {
                     new Document(
                             new Key("test", "test", Integer.toString(i)),
                             new Document.MetaInfo(new TopicPartition("test", 1), i),
-                            "{\"message\":\"hello world " + i + "\"}")
+                            ("{\"message\":\"hello world " + i + "\"}").getBytes(StandardCharsets.UTF_8))
             ));
         }
     }
@@ -104,11 +105,11 @@ public class TransportClientBaseStreamTest extends ESSingleNodeTestCase {
         private ExecutorService executorService;
         private TransportClientBaseStream transportClientBaseStream;
 
-        public Client getClient() {
+        Client getClient() {
             return client;
         }
 
-        public TransportClientBaseStream getTransportClientBaseStream() {
+        TransportClientBaseStream getTransportClientBaseStream() {
             return transportClientBaseStream;
         }
 

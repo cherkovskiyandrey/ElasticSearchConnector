@@ -8,8 +8,6 @@ import java.io.Closeable;
 import java.util.Collection;
 
 
-//TODO: индивидуальные документы могли не записаться из ошибок типа: version_conflict_engine_exception или mapper_parse_exception
-// нужно получить эти записи и решить что мы делаем - забиваем на них или переповторяем
 public interface ElasticWriteStream extends AutoCloseable {
 
     /**

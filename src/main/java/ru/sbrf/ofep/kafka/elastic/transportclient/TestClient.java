@@ -46,16 +46,16 @@ public class TestClient {
 
 
 ////        //Создание индекса
-        {
-            Settings.Builder settingsBuilder = Settings.settingsBuilder();
-            settingsBuilder.put("number_of_shards", 5);
-            settingsBuilder.put("number_of_replicas", 2);
-
-
-            client.admin().indices().prepareCreate("articles")
-                    .setSettings(settingsBuilder)
-                    .get();
-        }
+//        {
+//            Settings.Builder settingsBuilder = Settings.settingsBuilder();
+//            settingsBuilder.put("number_of_shards", 5);
+//            settingsBuilder.put("number_of_replicas", 2);
+//
+//
+//            client.admin().indices().prepareCreate("articles")
+//                    .setSettings(settingsBuilder)
+//                    .get();
+//        }
 //
 //        //Создание маппинга
         String globalMapping =

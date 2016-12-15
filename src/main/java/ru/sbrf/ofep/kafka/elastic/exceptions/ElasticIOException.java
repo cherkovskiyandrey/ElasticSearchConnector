@@ -1,18 +1,14 @@
 package ru.sbrf.ofep.kafka.elastic.exceptions;
 
-public class ElasticIOException extends Exception {
+public class ElasticIOException extends RecoverableException {
 
     private static final long serialVersionUID = -929439659255371487L;
 
-    public ElasticIOException(String message) {
-        super(message);
+    public ElasticIOException(Long offset, String message) {
+        super(offset, message);
     }
 
-    public ElasticIOException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public ElasticIOException(Throwable cause) {
-        super(cause);
+    public ElasticIOException(Long offset, String message, Throwable cause) {
+        super(offset, message, cause);
     }
 }

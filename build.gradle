@@ -48,14 +48,14 @@ def kafkaDependencies = [
         "org.apache.kafka:connect-api:${project['kafka.version']}",
         "org.apache.kafka:kafka-clients:${project['kafka.version']}",
         "org.apache.kafka:connect-json:${project['kafka.version']}",
-        "org.apache.commons:commons-lang3:3.4"
+        "org.apache.commons:commons-lang3:3.4",
+        "com.google.code.gson:gson:2.6.1"
 ]
 
 dependencies {
     compileOnly kafkaDependencies
     compile group: 'commons-io', name: 'commons-io', version: '2.4'
     compile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.4.2'
-
 
     testCompile kafkaDependencies
     testCompile group: 'com.google.guava', name: 'guava', version: '18.0'

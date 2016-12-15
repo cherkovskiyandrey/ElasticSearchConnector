@@ -2,8 +2,7 @@ package ru.sbrf.ofep.kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.sbrf.ofep.kafka.elastic.domain.FailedDocument;
-import ru.sbrf.ofep.kafka.elastic.exceptions.ElasticIOException;
+import ru.sbrf.ofep.kafka.elastic.exceptions.RecoverableException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,20 +10,20 @@ import java.util.List;
 public enum ErrorPolicy {
     FAIL_FAST("FAIL_FAST") {
         @Override
-        void handle(FailedDocument doc) throws ElasticIOException {
-            throw new IllegalStateException(doc.toString());
+        void handle(Long offset, String message, Throwable cause) throws RecoverableException {
+            throw new IllegalStateException("FAIL_FAST: " + message, cause);
         }
     },
     JUST_LOG("JUST_LOG") {
         @Override
-        void handle(FailedDocument doc) throws ElasticIOException {
-            LOG.warn("Could not export document: " + doc.toString());
+        void handle(Long offset, String message, Throwable cause) throws RecoverableException {
+            LOG.warn("JUST_LOG: could not export document: " + message, cause);
         }
     },
     RETRY_FOREVER("RETRY_FOREVER") {
         @Override
-        void handle(FailedDocument doc) throws ElasticIOException {
-            throw new ElasticIOException("IO exception has been arise: " + doc.getCause());
+        void handle(Long offset, String message, Throwable cause) throws RecoverableException {
+            throw new RecoverableException(offset, "RETRY_FOREVER: exception has been arise: " + message, cause);
         }
     },;
     private final static Logger LOG = LoggerFactory.getLogger(ErrorPolicy.class);
@@ -61,5 +60,5 @@ public enum ErrorPolicy {
         return name;
     }
 
-    abstract void handle(FailedDocument doc) throws ElasticIOException;
+    abstract void handle(Long offset, String message, Throwable cause) throws RecoverableException;
 }

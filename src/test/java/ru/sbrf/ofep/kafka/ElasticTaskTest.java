@@ -3,6 +3,7 @@ package ru.sbrf.ofep.kafka;
 import com.google.common.collect.ImmutableMap;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkTaskContext;
 import org.elasticsearch.discovery.MasterNotDiscoveredException;
@@ -10,15 +11,17 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import ru.sbrf.ofep.kafka.elastic.DocumentConverter;
+import ru.sbrf.ofep.kafka.config.ElasticConfig;
+import ru.sbrf.ofep.kafka.elastic.convertors.DocumentConverter;
 import ru.sbrf.ofep.kafka.elastic.ElasticWriteStream;
 import ru.sbrf.ofep.kafka.elastic.ElasticsearchClient;
+import ru.sbrf.ofep.kafka.elastic.convertors.GenerateDocumentIdMode;
 import ru.sbrf.ofep.kafka.elastic.domain.FailedDocument;
 import ru.sbrf.ofep.kafka.elastic.exceptions.ElasticIOException;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
+import static org.apache.kafka.connect.sink.SinkTask.TOPICS_CONFIG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyMap;
@@ -26,7 +29,8 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 import static ru.sbrf.ofep.kafka.DataGenerateHelper.generateFailedDocs;
 import static ru.sbrf.ofep.kafka.DataGenerateHelper.generateSinkByPort;
-import static ru.sbrf.ofep.kafka.config.ConfigParam.DEFAULT_INDEX;
+import static ru.sbrf.ofep.kafka.ElasticConnector.CONFIG_DEF;
+import static ru.sbrf.ofep.kafka.config.ConfigParam.*;
 
 public class ElasticTaskTest {
 
@@ -36,9 +40,17 @@ public class ElasticTaskTest {
 
     //TODO: проверка пустой коллекции
 
+    private Map<String, String> settings() {
+        final Map<String, String> settings = new HashMap<>();
+        settings.put(TOPICS_CONFIG, "topic1");
+        settings.put(CLUSTER_NAME.getName(), "test");
+        settings.put(CLUSTER_NODES.getName(), "localhost:9300");
+        return settings;
+    }
+
     @Test
     public void simplePutTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.FAIL_FAST)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.FAIL_FAST)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
 
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
@@ -52,7 +64,7 @@ public class ElasticTaskTest {
 
     @Test
     public void putWithTwoPartitionsTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.FAIL_FAST)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.FAIL_FAST)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(2, 1));
 
             assertEquals(2, recourseBundle.getElasticWriteStreams().size());
@@ -71,7 +83,7 @@ public class ElasticTaskTest {
     @Test
     @SuppressWarnings("unchecked")
     public void putWithConnectionLostErrorTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.FAIL_FAST)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.FAIL_FAST)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
 
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
@@ -94,7 +106,7 @@ public class ElasticTaskTest {
     @Test
     @SuppressWarnings("unchecked")
     public void putWithNoConnectionLostErrorAndRetryPolicyTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.RETRY_FOREVER)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.RETRY_FOREVER)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
 
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
@@ -117,7 +129,7 @@ public class ElasticTaskTest {
     @Test
     @SuppressWarnings("unchecked")
     public void putWithNoConnectionLostErrorAndRetryPolicyWithTwoPartitionsTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.RETRY_FOREVER)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.RETRY_FOREVER)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(2, 1));
 
             assertEquals(2, recourseBundle.getElasticWriteStreams().size());
@@ -139,7 +151,7 @@ public class ElasticTaskTest {
 
     @Test(expected = ConnectException.class)
     public void putWithNoConnectionLostErrorAndFailPolicyTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.FAIL_FAST)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.FAIL_FAST)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
 
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
@@ -153,7 +165,7 @@ public class ElasticTaskTest {
 
     @Test
     public void putWithNoConnectionLostErrorAndLogPolicyTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.JUST_LOG)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.JUST_LOG)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
 
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
@@ -169,15 +181,15 @@ public class ElasticTaskTest {
 
     @Test
     public void simpleFlushWithoutDataTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.JUST_LOG)) {
-            recourseBundle.getElasticTask().flush(null);
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.JUST_LOG)) {
+            recourseBundle.getElasticTask().flush(Collections.<TopicPartition, OffsetAndMetadata>emptyMap());
             assertTrue(recourseBundle.getElasticWriteStreams().isEmpty());
         }
     }
 
     @Test
     public void simpleFlushTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.JUST_LOG)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.JUST_LOG)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
 
@@ -191,7 +203,7 @@ public class ElasticTaskTest {
 
     @Test
     public void flushAndConnectionLostErrorTest() throws Exception {
-        try (RecourseBundle recourseBundle = new RecourseBundle(ErrorPolicy.JUST_LOG)) {
+        try (RecourseBundle recourseBundle = new RecourseBundle(settings(), ErrorPolicy.JUST_LOG)) {
             recourseBundle.getElasticTask().put(generateSinkByPort(1, 1));
             assertEquals(1, recourseBundle.getElasticWriteStreams().size());
 
@@ -201,7 +213,7 @@ public class ElasticTaskTest {
                     .thenReturn(generateFailedDocs(1, new MasterNotDiscoveredException(), "MasterNotDiscoveredException"))
             ;
 
-            doThrow(new ElasticIOException("")).when(recourseBundle.getElasticWriteStreams().getFirst()).flush();
+            doThrow(new ElasticIOException(0L, "")).when(recourseBundle.getElasticWriteStreams().getFirst()).flush();
 
             final Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
             offsets.put(new TopicPartition("test", 0), new OffsetAndMetadata(10));
@@ -227,14 +239,25 @@ public class ElasticTaskTest {
         }
     }
 
+    private static ElasticConfig configuration() {
+        return ElasticConfig.of(new AbstractConfig(CONFIG_DEF,
+                ImmutableMap.of(
+                        TOPICS.getName(), "test",
+                        CLUSTER_NAME.getName(), "test",
+                        CLUSTER_NODES.getName(), "localhost:9300",
+                        ID_MODE.getName(), GenerateDocumentIdMode.KAFKA_KEY.getValueName()
+                )
+        ));
+    }
+
     private class RecourseBundle implements AutoCloseable {
         private final SinkTaskContext sinkTaskContext = mock(SinkTaskContext.class);
         private final ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
         private final LinkedList<ElasticWriteStream> elasticWriteStreams = new LinkedList<>();
-        private final DocumentConverter documentConverter = new DocumentConverter(null, null, DocumentConverter.IdMode.KAFKA_KEY);
+        private final DocumentConverter documentConverter = new DocumentConverter(configuration());
         private final ElasticTask elasticTask;
 
-        RecourseBundle(ErrorPolicy errorPolicy) {
+        RecourseBundle(Map<String, String> settings, ErrorPolicy errorPolicy) {
             when(elasticsearchClient.createIndexIfNotExists(anyString())).thenReturn(true);
             when(elasticsearchClient.putMappingIfNotExists(anyString(), anyString(), anyString())).thenReturn(true);
             when(elasticsearchClient.createNewStream()).then(new Answer<ElasticWriteStream>() {
@@ -247,7 +270,8 @@ public class ElasticTaskTest {
 
             elasticTask = new ElasticTask();
             elasticTask.initialize(sinkTaskContext);
-            elasticTask.start(ImmutableMap.of(DEFAULT_INDEX.getName(), "test"), elasticsearchClient, documentConverter, errorPolicy);
+
+            elasticTask.start(settings, elasticsearchClient, documentConverter, errorPolicy);
         }
 
         public SinkTaskContext getSinkTaskContext() {
